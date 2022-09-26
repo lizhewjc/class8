@@ -1,10 +1,5 @@
-1234567
-12345678
-qwwertyui
-3245789
-artyjsfdghj
-sdgvbnkl    12345qwertyu
-12232333333
+1PO模式的全称page object model（POM），有时候也叫做page object pattern。由马丁福勒提出，受到了selenium自动化测试框架的大力推广，因而成为一种非常主流的自动化测试设计模式
+PO模式是在UI自动化测试过程当中使用非常频繁的一种设计模式，使用这种模式，可以有效的提升代码的复用能力，并且让自动化测试代码维护起来更加方便
 444444444
 11111111111yuhjnasfiucjkhndjfksnmcjdskmnv jckmn
 hjnasbf hjcnb sdkjm,nfc jkgh97wsiowkns 
