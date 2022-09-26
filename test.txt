@@ -1,9 +1,128 @@
-11111111
-22222222
-33333333
-44444444
-55555555
-66666666:
-123456
-123312
-11111111111111111
+import yaml
+import os
+from selenium import webdriver
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
+
+
+class PageBase:
+    """
+    页面基类：处理页面公共业务、存放公共方法
+    """
+    def __init__(self, driver: WebDriver):
+        self.driver = driver
+
+
+class PageLogin(PageBase):
+    """
+    登录页面
+    """
+    # 页面url地址
+    _page_url = "https://work.weixin.qq.com/wework_admin/loginpage_wx"
+
+    def goto_index(self):
+        """
+        跳转到首页
+        :return:
+        """
+        self.driver.get(self._page_url)
+
+        if not os.path.exists("resource"):
+            os.mkdir("resource")
+
+        if os.path.exists("resource/cookie.yaml"):
+            cookie = yaml.safe_load(open("resource/cookie.yaml"))
+            for i in cookie:
+                self.driver.add_cookie(i)
+            self.driver.get("https://work.weixin.qq.com/wework_admin/frame#index")
+        else:
+            # 扫码登录，等待页面加载
+            WebDriverWait(self.driver, 60).until(expected_conditions.url_contains("wework_admin/frame"))
+
+            # 存入cookie
+            cookie = self.driver.get_cookies()
+            with open("resource/cookie.yaml", "w") as f:
+                yaml.safe_dump(cookie, f)
+
+        # 返回首页实例对象
+        return PageIndex(self.driver)
+
+
+class PageIndex(PageBase):
+    """
+    首页
+    """
+    # 页面url地址
+    _page_url = "https://work.weixin.qq.com/wework_admin/frame#index"
+
+    # 页面元素定位
+    _path_contact = (By.ID, "menu_contacts")
+    _path_addmember = (By.CSS_SELECTOR, '.ww_indexImg_AddMember')
+
+    def goto_addmember(self):
+        """
+        跳转添加成员页面
+        :return:
+        """
+        self.driver.find_element(*self._path_addmember).click()
+
+        # 返回添加成员页面的实例对象
+        return PageAddmember(self.driver)
+
+
+class PageAddmember(PageBase):
+    """
+    添加成员页面
+    """
+    # 页面url地址
+    _page_url = "https://work.weixin.qq.com/wework_admin/frame#contacts"
+
+    # 页面元素定位
+    _path_name = (By.ID, "username")
+    _path_id = (By.ID, "memberAdd_acctid")
+    _path_tel = (By.ID, "memberAdd_phone")
+    _path_finish = (By.CSS_SELECTOR, ".js_btn_save")
+    _path_tips = (By.CSS_SELECTOR, ".ww_inputWithTips_WithErr")
+
+    def add_member_success(self, member_name, member_id, member_tel):
+        """
+        添加成员成功，跳转回通讯录页面
+        :param member_name: 姓名
+        :param member_id: 账号
+        :param member_tel: 手机
+        :return: 通讯录页面页面
+        """
+        self.driver.find_element(*self._path_name).send_keys(member_name)
+        self.driver.find_element(*self._path_id).send_keys(member_id)
+        self.driver.find_element(*self._path_tel).send_keys(member_tel)
+        self.driver.find_element(*self._path_finish).click()
+
+        # 返回页面通讯录页面实例对象
+        return PageContact(self.driver)
+
+
+class PageContact(PageBase):
+    """
+    通讯录页面
+    """
+    pass
+
+
+# 测试用例
+class TestCookie:
+    def setup(self):
+        self.driver = webdriver.Chrome()
+        self.driver.maximize_window()
+        self.driver.implicitly_wait(3)
+
+    def teardown(self):
+        self.driver.quit()
+
+    # 一个简单的添加成员用例
+    def test_addmember_success(self):
+        data = ('llbai', '9527', '13122223333')
+
+        # 基于已有的页面类和方法，可以快速实现登录-进入页面-进入添加成员页面-添加成员
+        PageLogin(self.driver).goto_index().goto_addmember().add_member_success(*data)
